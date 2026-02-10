@@ -1,4 +1,4 @@
-import { getContentTypeLabel } from "./utils.js";
+import { getContentTypeLabel } from "../general/utils.js";
 import { courseContent } from "./test.js";
 
 // Глобальные переменные

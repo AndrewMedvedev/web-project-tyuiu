@@ -1,4 +1,4 @@
-import { initApp } from "./createModules.js";
+import { initApp } from "../general/createModules.js";
 
 const data = {
   creator_id: 1779915071,
