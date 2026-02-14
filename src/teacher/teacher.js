@@ -3,7 +3,6 @@ import { courseContent } from "./test.js";
 
 // Глобальные переменные
 let courseData = null;
-let currentModuleIndex = 0;
 let onTypeSelectCallback = null;
 
 // Инициализация админ-панели
@@ -12,8 +11,7 @@ async function initAdmin() {
     // Загружаем данные курса из JSON файла или другого источника
     await loadCourseData();
     hideLoading();
-    renderModulesSwitcher();
-    renderCurrentModule();
+    renderContentBlocks();
     setupEventListeners();
   } catch (error) {
     console.error("Ошибка инициализации:", error);
@@ -24,18 +22,7 @@ async function initAdmin() {
 // Загрузка данных курса
 async function loadCourseData() {
   try {
-    // Вариант 1: Загрузка из внешнего файла
     courseData = courseContent;
-
-    if (!courseData.modules || courseData.modules.length === 0) {
-      courseData.modules = [createEmptyModule()];
-    }
-
-    // Убеждаемся, что у всех модулей есть порядковый номер
-    courseData.modules.forEach((module, index) => {
-      module.order = module.order || index;
-      module.content_blocks = module.content_blocks || [];
-    });
   } catch (error) {
     console.error("Ошибка загрузки данных:", error);
     // Создаем минимальные демо данные
@@ -50,7 +37,7 @@ function createEmptyModule() {
   return {
     title: "Новый модуль",
     description: "Описание модуля",
-    order: courseData ? courseData.modules.length : 0,
+    order: 0,
     content_blocks: [createEmptyBlock("text")],
   };
 }
@@ -97,166 +84,21 @@ function createEmptyBlock(type) {
   return templates[type] || templates.text;
 }
 
-// Рендеринг панели переключения модулей вверху
-function renderModulesSwitcher() {
-  const switcher = document.createElement("div");
-  switcher.className = "modules-switcher";
-  switcher.innerHTML = `
-        <div class="modules-nav">
-            <button class="nav-arrow" id="prevModuleBtn" title="Предыдущий модуль" ${currentModuleIndex === 0 ? "disabled" : ""}>
-                ←
-            </button>
-            
-            <select class="module-select" id="moduleSelect">
-                ${courseData.modules
-                  .map(
-                    (module, index) => `
-                    <option value="${index}" ${index === currentModuleIndex ? "selected" : ""}>
-                        Модуль ${index + 1}: ${module.title || "Без названия"}
-                    </option>
-                `,
-                  )
-                  .join("")}
-            </select>
-            
-            <button class="nav-arrow" id="nextModuleBtn" title="Следующий модуль" ${currentModuleIndex === courseData.modules.length - 1 ? "disabled" : ""}>
-                →
-            </button>
-        </div>
-        
-        <div class="module-info">
-            <span>Блоков: <span id="blocksCount">${courseData.modules[currentModuleIndex]?.content_blocks?.length || 0}</span></span>
-            <span>•</span>
-            <button id="deleteCurrentModule" style="background: none; border: none; color: #e53e3e; cursor: pointer; font-size: 12px;">
-                Удалить этот модуль
-            </button>
-        </div>
-    `;
-
-  document.body.appendChild(switcher);
-
-  // Обработчики событий для панели переключения
-  setupSwitcherEvents();
-}
-
-// Настройка обработчиков событий для панели переключения
-function setupSwitcherEvents() {
-  // Предыдущий модуль
-  document.getElementById("prevModuleBtn").addEventListener("click", () => {
-    if (currentModuleIndex > 0) {
-      currentModuleIndex--;
-      renderCurrentModule();
-      updateSwitcher();
-    }
-  });
-
-  // Следующий модуль
-  document.getElementById("nextModuleBtn").addEventListener("click", () => {
-    if (currentModuleIndex < courseData.modules.length - 1) {
-      currentModuleIndex++;
-      renderCurrentModule();
-      updateSwitcher();
-    }
-  });
-
-  // Выбор модуля из списка
-  document.getElementById("moduleSelect").addEventListener("change", (e) => {
-    currentModuleIndex = parseInt(e.target.value);
-    renderCurrentModule();
-    updateSwitcher();
-  });
-
-  // Удаление текущего модуля
-  document
-    .getElementById("deleteCurrentModule")
-    .addEventListener("click", () => {
-      deleteCurrentModule();
-    });
-}
-
-// Обновление панели переключения
-function updateSwitcher() {
-  const moduleSelect = document.getElementById("moduleSelect");
-  const prevBtn = document.getElementById("prevModuleBtn");
-  const nextBtn = document.getElementById("nextModuleBtn");
-  const blocksCount = document.getElementById("blocksCount");
-
-  if (moduleSelect) {
-    moduleSelect.innerHTML = courseData.modules
-      .map(
-        (module, index) => `
-            <option value="${index}" ${index === currentModuleIndex ? "selected" : ""}>
-                Модуль ${index + 1}: ${module.title || "Без названия"}
-            </option>
-        `,
-      )
-      .join("");
-  }
-
-  if (prevBtn) {
-    prevBtn.disabled = currentModuleIndex === 0;
-  }
-
-  if (nextBtn) {
-    nextBtn.disabled = currentModuleIndex === courseData.modules.length - 1;
-  }
-
-  if (blocksCount && courseData.modules[currentModuleIndex]) {
-    blocksCount.textContent =
-      courseData.modules[currentModuleIndex].content_blocks.length;
-  }
-}
-
-// Рендеринг текущего модуля
-function renderCurrentModule() {
+// Рендеринг контент блоков
+function renderContentBlocks() {
   const app = document.getElementById("app");
   app.innerHTML = "";
 
-  if (!courseData.modules[currentModuleIndex]) {
-    currentModuleIndex = 0;
-    if (!courseData.modules[currentModuleIndex]) return;
+  if (!courseData.modules || courseData.modules.length === 0) {
+    courseData.modules = [createEmptyModule()];
   }
 
-  const module = courseData.modules[currentModuleIndex];
+  const module = courseData;
 
-  // Создаем редактор модуля
-  const moduleEditor = document.createElement("div");
-  moduleEditor.className = "module-editor";
-
-  // Заголовок и описание модуля
-  const headerEditor = document.createElement("div");
-  headerEditor.className = "module-header-editor";
-
-  // Название модуля
-  const titleGroup = document.createElement("div");
-  titleGroup.className = "form-group";
-  titleGroup.innerHTML = `
-        <label class="form-label">Название модуля:</label>
-        <input type="text" class="module-input" value="${module.title || ""}" 
-               placeholder="Введите название модуля">
-    `;
-
-  titleGroup.querySelector("input").addEventListener("input", (e) => {
-    module.title = e.target.value;
-    updateSwitcher();
-  });
-
-  // Описание модуля
-  const descGroup = document.createElement("div");
-  descGroup.className = "form-group";
-  descGroup.innerHTML = `
-        <label class="form-label">Описание модуля:</label>
-        <textarea class="module-input" rows="3" 
-                  placeholder="Введите описание модуля">${module.description || ""}</textarea>
-    `;
-
-  descGroup.querySelector("textarea").addEventListener("input", (e) => {
-    module.description = e.target.value;
-  });
-
-  headerEditor.appendChild(titleGroup);
-  headerEditor.appendChild(descGroup);
-  moduleEditor.appendChild(headerEditor);
+  // Убеждаемся, что content_blocks существует
+  if (!module.content_blocks) {
+    module.content_blocks = [];
+  }
 
   // Контейнер для блоков
   const blocksContainer = document.createElement("div");
@@ -269,27 +111,21 @@ function renderCurrentModule() {
       const blockElement = createBlockEditor(block, index);
       blocksContainer.appendChild(blockElement);
     });
-  } else {
-    module.content_blocks = [];
   }
 
-  moduleEditor.appendChild(blocksContainer);
+  app.appendChild(blocksContainer);
 
   // Кнопка добавления блока
   const addBlockBtn = document.createElement("button");
   addBlockBtn.className = "add-block-btn";
-  addBlockBtn.innerHTML = "➕ <span>Добавить блок в конец</span>";
+  addBlockBtn.innerHTML = "➕ <span>Добавить блок</span>";
   addBlockBtn.addEventListener("click", () => {
     showBlockTypeModal((type) => {
-      addBlockToEnd(type);
+      addNewBlock(type);
     });
   });
 
-  moduleEditor.appendChild(addBlockBtn);
-  app.appendChild(moduleEditor);
-
-  // Обновляем счетчик блоков
-  updateSwitcher();
+  app.appendChild(addBlockBtn);
 }
 
 // Создание редактора блока
@@ -321,10 +157,7 @@ function createBlockEditor(block, index) {
   }
 
   // Кнопка перемещения вниз
-  if (
-    index <
-    courseData.modules[currentModuleIndex].content_blocks.length - 1
-  ) {
+  if (index < courseData.content_blocks.length - 1) {
     const moveDownBtn = document.createElement("button");
     moveDownBtn.className = "block-control-btn move-down-btn";
     moveDownBtn.title = "Переместить вниз";
@@ -594,19 +427,19 @@ function addKeyMomentRow(container, block, time, description) {
 
 // Обновление ключевых моментов
 function updateKeyMoments(block) {
+  const container = document.querySelector(
+    ".key-moments-editor .key-moment-row",
+  )?.parentElement;
+  if (!container) return;
+
   block.key_moments = {};
-  const container = event
-    ? event.target.closest(".key-moment-row").parentElement
-    : null;
-  if (container) {
-    container.querySelectorAll(".key-moment-row").forEach((row) => {
-      const time = row.querySelector(".key-moment-time").value;
-      const desc = row.querySelector('input[type="text"]:nth-child(2)').value;
-      if (time && desc) {
-        block.key_moments[time] = desc;
-      }
-    });
-  }
+  container.querySelectorAll(".key-moment-row").forEach((row) => {
+    const time = row.querySelector(".key-moment-time").value;
+    const desc = row.querySelector('input[type="text"]:nth-child(2)').value;
+    if (time && desc) {
+      block.key_moments[time] = desc;
+    }
+  });
 }
 
 // Добавление строки вопроса
@@ -628,8 +461,10 @@ function addQuestionRow(container, block, question, index) {
   questionRow.appendChild(textarea);
   questionRow.appendChild(deleteBtn);
 
+  container.appendChild(questionRow);
+
   // Определяем индекс вопроса
-  const qIndex = index !== undefined ? index : container.children.length;
+  const qIndex = index !== undefined ? index : container.children.length - 1;
 
   deleteBtn.addEventListener("click", () => {
     questionRow.remove();
@@ -650,8 +485,6 @@ function addQuestionRow(container, block, question, index) {
     }
     block.discussion_questions[qIndex] = e.target.value;
   });
-
-  container.appendChild(questionRow);
 }
 
 // Рендеринг редактора кода
@@ -800,9 +633,11 @@ function addQuizQuestionRow(container, block, question, qIndex) {
     block.questions.splice(qIndex, 1);
     // Обновляем индексы оставшихся вопросов
     container.querySelectorAll(".question-editor").forEach((div, idx) => {
-      div.querySelector(".form-label").textContent = `Вопрос ${idx + 1}:`;
-      div.querySelector(".answer-input").previousElementSibling.textContent =
-        `Ответ ${idx + 1}:`;
+      const label = div.querySelector(".form-label");
+      if (label) label.textContent = `Вопрос ${idx + 1}:`;
+      const answerLabel =
+        div.querySelector(".answer-input")?.previousElementSibling;
+      if (answerLabel) answerLabel.textContent = `Ответ ${idx + 1}:`;
     });
   });
 }
@@ -859,84 +694,58 @@ function renderMermaidEditor(container, block, index) {
 // Управление блоками
 function moveBlockUp(index) {
   if (index > 0) {
-    const blocks = courseData.modules[currentModuleIndex].content_blocks;
+    const blocks = courseData.content_blocks;
     [blocks[index], blocks[index - 1]] = [blocks[index - 1], blocks[index]];
-    renderCurrentModule();
+    renderContentBlocks();
   }
 }
 
 function moveBlockDown(index) {
-  const blocks = courseData.modules[currentModuleIndex].content_blocks;
+  const blocks = courseData.content_blocks;
   if (index < blocks.length - 1) {
     [blocks[index], blocks[index + 1]] = [blocks[index + 1], blocks[index]];
-    renderCurrentModule();
+    renderContentBlocks();
   }
 }
 
 function deleteBlock(index) {
   if (confirm("Удалить этот блок?")) {
-    const blocks = courseData.modules[currentModuleIndex].content_blocks;
+    const blocks = courseData.content_blocks;
     blocks.splice(index, 1);
-    renderCurrentModule();
+    renderContentBlocks();
   }
 }
 
 function addBlockBelow(index, type) {
   const newBlock = createEmptyBlock(type);
-  const blocks = courseData.modules[currentModuleIndex].content_blocks;
+  const blocks = courseData.content_blocks;
   blocks.splice(index + 1, 0, newBlock);
-  renderCurrentModule();
+  renderContentBlocks();
 }
 
-function addBlockToEnd(type) {
+function addNewBlock(type) {
   const newBlock = createEmptyBlock(type);
-  const blocks = courseData.modules[currentModuleIndex].content_blocks;
+  const blocks = courseData.content_blocks;
   blocks.push(newBlock);
-  renderCurrentModule();
-}
-
-// Управление модулями
-function addNewModule() {
-  const newModule = createEmptyModule();
-  newModule.order = courseData.modules.length;
-  courseData.modules.push(newModule);
-  currentModuleIndex = courseData.modules.length - 1;
-  renderCurrentModule();
-  updateSwitcher();
-}
-
-function deleteCurrentModule() {
-  if (confirm("Удалить текущий модуль?")) {
-    courseData.modules.splice(currentModuleIndex, 1);
-
-    // Обновляем порядковые номера
-    courseData.modules.forEach((module, idx) => {
-      module.order = idx;
-    });
-
-    // Если удалили последний модуль
-    if (courseData.modules.length === 0) {
-      courseData.modules.push(createEmptyModule());
-    }
-
-    // Если удалили текущий модуль, переходим к предыдущему или первому
-    if (currentModuleIndex >= courseData.modules.length) {
-      currentModuleIndex = Math.max(0, courseData.modules.length - 1);
-    }
-
-    renderCurrentModule();
-    updateSwitcher();
-  }
+  renderContentBlocks();
 }
 
 // Модальное окно выбора типа блока
 function showBlockTypeModal(callback = null) {
   onTypeSelectCallback = callback;
-  document.getElementById("blockTypeModal").style.display = "flex";
+  const modal = document.getElementById("blockTypeModal");
+  if (modal) {
+    modal.style.display = "flex";
+  } else {
+    console.error("Модальное окно не найдено");
+  }
 }
 
 function hideBlockTypeModal() {
-  document.getElementById("blockTypeModal").style.display = "none";
+  const modal = document.getElementById("blockTypeModal");
+  if (modal) {
+    modal.style.display = "none";
+  }
   onTypeSelectCallback = null;
 }
 
@@ -974,12 +783,10 @@ function exportJSON() {
 // Настройка обработчиков событий
 function setupEventListeners() {
   // Кнопка экспорта
-  document.getElementById("exportBtn").addEventListener("click", exportJSON);
-
-  // Кнопка добавления модуля
-  document
-    .getElementById("addModuleBtn")
-    .addEventListener("click", addNewModule);
+  const exportBtn = document.getElementById("exportBtn");
+  if (exportBtn) {
+    exportBtn.addEventListener("click", exportJSON);
+  }
 
   // Модальное окно выбора типа блока
   document.querySelectorAll("#blockTypeModal [data-type]").forEach((btn) => {
@@ -993,9 +800,10 @@ function setupEventListeners() {
   });
 
   // Кнопка отмены в модальном окне
-  document
-    .getElementById("cancelBlockType")
-    .addEventListener("click", hideBlockTypeModal);
+  const cancelBtn = document.getElementById("cancelBlockType");
+  if (cancelBtn) {
+    cancelBtn.addEventListener("click", hideBlockTypeModal);
+  }
 }
 
 // Скрытие индикатора загрузки

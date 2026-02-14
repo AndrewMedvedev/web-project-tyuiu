@@ -10,16 +10,24 @@ body {
     sans-serif;
   line-height: 1.6;
   color: #333;
-  background: #f5f5f5;
+  background: linear-gradient(135deg, #8e9de0 0%, #2f49b1 100%);
   padding: 0;
   max-width: 100%;
   overflow-x: hidden;
 }
 
+/* ИЗМЕНЕНО: увеличили максимальную ширину контейнера */
 .container {
-  max-width: 800px;
+  max-width: 900px; /* было 800px */
   margin: 0 auto;
   padding: 16px;
+}
+
+/* ДОБАВЛЕНО: опциональный режим для очень широких экранов */
+@media (min-width: 1300px) {
+  .container {
+    max-width: 1100px; /* еще шире для очень больших экранов */
+  }
 }
 
 .module-header {
@@ -52,14 +60,30 @@ body {
   margin-top: 8px;
 }
 
+/* ИЗМЕНЕНО: улучшили отображение блоков на широких экранах */
 .content-block {
   background: white;
   border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 20px;
+  padding: 24px; /* было 20px */
+  margin-bottom: 24px; /* было 20px */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transition: transform 0.2s ease;
   position: relative;
+}
+
+/* ДОБАВЛЕНО: сетка для контента на широких экранах */
+@media (min-width: 1200px) {
+  .content-block.video-block,
+  .content-block.code-block,
+  .content-block.mermaid-block {
+    padding: 28px;
+  }
+
+  /* Улучшаем читаемость текста на широких экранах */
+  .text-content {
+    max-width: 900px; /* оптимальная ширина для чтения */
+    margin: 0 auto;
+  }
 }
 
 .content-block:hover {
@@ -119,6 +143,18 @@ body {
   margin-bottom: 16px;
   font-size: 16px;
   line-height: 1.6;
+}
+
+/* ДОБАВЛЕНО: улучшаем отображение списков на широких экранах */
+@media (min-width: 1200px) {
+  .text-content ul,
+  .text-content ol {
+    margin: 16px 0 16px 32px;
+  }
+
+  .text-content li {
+    margin-bottom: 10px;
+  }
 }
 
 .text-content ul,
@@ -230,7 +266,7 @@ body {
   color: #4a5568;
 }
 
-/* Видео блоки */
+/* ИЗМЕНЕНО: улучшили отображение видео на широких экранах */
 .video-container {
   position: relative;
   width: 100%;
@@ -242,9 +278,16 @@ body {
 
 .video-container iframe {
   width: 100%;
-  height: 300px;
+  height: 450px; /* было 300px */
   border: none;
   display: block;
+}
+
+/* ДОБАВЛЕНО: еще больше для очень широких экранов */
+@media (min-width: 1600px) {
+  .video-container iframe {
+    height: 600px;
+  }
 }
 
 .video-meta {
@@ -319,7 +362,7 @@ body {
   border-left: 4px solid #667eea;
 }
 
-/* Код блоки */
+/* ИЗМЕНЕНО: улучшили отображение кода на широких экранах */
 .code-block {
   position: relative;
   margin: 20px 0;
@@ -339,17 +382,24 @@ body {
 .language-label {
   font-family: "Courier New", monospace;
   font-weight: 600;
+  color: #d4d8dc;
+  text-transform: lowercase;
+  letter-spacing: 0.5px;
+  font-size: 12px;
+  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
 }
 
 .code-content {
   background: #1a202c;
   color: #e2e8f0;
-  padding: 20px;
+  padding: 24px; /* было 20px */
   border-radius: 0 0 8px 8px;
   overflow-x: auto;
   font-family: "Courier New", monospace;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 15px; /* было 14px */
+  line-height: 1.6; /* было 1.5 */
   white-space: pre;
 }
 
@@ -359,6 +409,89 @@ body {
   background: #f0fff4;
   border-radius: 8px;
   border-left: 4px solid #48bb78;
+}
+
+/* ИЗМЕНЕНО: улучшили отображение Mermaid диаграмм */
+.mermaid {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-x: auto;
+  padding: 24px 0;
+}
+
+.mermaid-block {
+  margin: 24px 0;
+  padding: 20px 24px; /* было 16px 20px */
+  background: #fafafa;
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
+}
+
+.mermaid .node rect {
+  fill: #e3f2fd;
+  stroke: #a91256;
+  stroke-width: 1.5px;
+  rx: 10;
+  ry: 10;
+}
+
+.mermaid .node circle,
+.mermaid .node ellipse,
+.mermaid .node polygon {
+  stroke-width: 1.5px;
+  rx: 6;
+  ry: 6;
+}
+
+.mermaid .node text {
+  fill: #0d47a1;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.mermaid .edgePath path {
+  stroke: #546e7a;
+  stroke-width: 1.6px;
+}
+
+.mermaid .marker {
+  fill: #546e7a;
+}
+
+.mermaid .edgeLabel {
+  background: transparent;
+  color: #37474f;
+  font-size: 12px;
+}
+
+.mermaid .node polygon {
+  fill-opacity: 0.95;
+}
+
+.mermaid .node:hover rect {
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.15));
+  transition: filter 0.2s ease;
+}
+
+.mermaid .node:hover polygon {
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.15));
+  transition: filter 0.2s ease;
+}
+
+.mermaid-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #263238;
+}
+
+.mermaid-error {
+  color: #c62828;
+  background: #ffebee;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: 500;
 }
 
 /* Quiz блоки */
@@ -420,18 +553,6 @@ body {
   font-size: 14px;
 }
 
-/* Mermaid диаграммы */
-.mermaid-diagram {
-  margin: 20px 0;
-  padding: 20px;
-  background: white;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  text-align: center;
-  color: #666;
-  font-style: italic;
-}
-
 /* Загрузка и ошибки */
 .loading {
   display: flex;
@@ -470,21 +591,26 @@ body {
   display: flex;
   gap: 10px;
   flex-direction: column;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 15px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e2e8f0;
 }
 
 .admin-button {
-  padding: 12px 20px;
+  padding: 12px 24px;
   border: none;
-  border-radius: 50px;
+  border-radius: 8px;
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  min-width: 140px;
 }
 
 .edit-button {
@@ -543,9 +669,12 @@ body {
   gap: 8px;
   margin-top: 15px;
   padding-top: 15px;
-  border-top: 1px dashed #e2e8f0;
+  border-top: 1px solid #e2e8f0;
   justify-content: flex-end;
   flex-wrap: wrap;
+  background: #f8fafc;
+  padding: 12px;
+  border-radius: 8px;
 }
 
 .block-control-btn {
@@ -559,6 +688,7 @@ body {
   display: flex;
   align-items: center;
   gap: 4px;
+  white-space: nowrap;
 }
 
 .delete-btn {
@@ -627,221 +757,6 @@ body {
   animation: pulse 2s infinite;
 }
 
-@keyframes pulse {
-  0% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-/* Адаптивность для мобильных */
-@media (max-width: 600px) {
-  .container {
-    padding: 12px;
-  }
-
-  .module-header {
-    padding: 20px 12px;
-    border-radius: 0 0 16px 16px;
-  }
-
-  .module-title {
-    font-size: 20px;
-  }
-
-  .content-block {
-    padding: 16px;
-  }
-
-  .video-container iframe {
-    height: 200px;
-  }
-
-  .text-content h1 {
-    font-size: 24px;
-  }
-
-  .text-content h2 {
-    font-size: 20px;
-  }
-
-  .text-content table {
-    font-size: 13px;
-  }
-
-  .text-content th,
-  .text-content td {
-    padding: 8px;
-  }
-
-  .admin-panel {
-    bottom: 10px;
-    right: 10px;
-    left: 10px;
-    flex-direction: row;
-    justify-content: center;
-  }
-
-  .admin-button {
-    padding: 10px 16px;
-    font-size: 13px;
-    flex: 1;
-  }
-
-  .block-controls {
-    flex-direction: column;
-  }
-
-  .block-control-btn {
-    width: 100%;
-    justify-content: center;
-  }
-}
-
-/* Анимация для добавления/удаления блоков */
-.content-block {
-  transition: all 0.3s ease;
-}
-
-.content-block.adding {
-  animation: slideIn 0.3s ease;
-}
-
-.content-block.removing {
-  animation: slideOut 0.3s ease;
-  opacity: 0;
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideOut {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-/* Анимация для добавления новых блоков */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.content-block.new-block {
-  animation: fadeIn 0.5s ease-out;
-}
-
-/* Улучшенные стили для редактирования видео */
-.video-meta .editable-content,
-.key-moment-desc.editable-content,
-.question-item.editable-content {
-  min-height: 20px;
-  padding: 4px 8px;
-  margin: 2px 0;
-}
-
-.video-platform.editable-content {
-  display: inline-block;
-  min-width: 80px;
-}
-
-.video-duration.editable-content {
-  display: inline-block;
-  min-width: 40px;
-}
-
-/* Стили для кнопок в режиме редактирования */
-.admin-panel {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 1000;
-  display: flex;
-  gap: 10px;
-  flex-direction: column;
-  background: rgba(255, 255, 255, 0.95);
-  padding: 15px;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  border: 1px solid #e2e8f0;
-}
-
-.admin-button {
-  padding: 12px 24px;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-width: 140px;
-}
-
-/* Улучшенные стили для управления блоками */
-.block-controls {
-  display: flex;
-  gap: 8px;
-  margin-top: 15px;
-  padding-top: 15px;
-  border-top: 1px solid #e2e8f0;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  background: #f8fafc;
-  padding: 12px;
-  border-radius: 8px;
-}
-
-.block-control-btn {
-  padding: 8px 12px;
-  border: none;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  white-space: nowrap;
-}
-
 /* Индикатор редактирования */
 .editing-indicator {
   position: absolute;
@@ -890,149 +805,7 @@ body {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
-/* Адаптивность для мобильных */
-@media (max-width: 600px) {
-  .admin-panel {
-    bottom: 10px;
-    right: 10px;
-    left: 10px;
-    flex-direction: row;
-    justify-content: center;
-    padding: 12px;
-  }
-
-  .admin-button {
-    padding: 10px 16px;
-    font-size: 13px;
-    min-width: auto;
-    flex: 1;
-  }
-
-  .block-controls {
-    flex-direction: column;
-  }
-
-  .block-control-btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  #test-admin-toggle {
-    top: 5px;
-    right: 5px;
-    padding: 8px 12px;
-    font-size: 11px;
-  }
-}
-
-/* Анимация пульсации */
-@keyframes pulse {
-  0% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.7;
-    transform: scale(1.05);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* Стили для кастомных модальных окон */
-.custom-modal-content,
-.block-type-modal-content {
-  animation: modalFadeIn 0.3s ease-out;
-}
-
-@keyframes modalFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-20px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.custom-modal button:hover,
-.block-type-modal-content button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.custom-modal button:active,
-.block-type-modal-content button:active {
-  transform: translateY(0);
-}
-
-/* Стили для выбора типа блока */
-.block-type-modal-content button {
-  transition: all 0.2s ease;
-}
-
-.block-type-modal-content button:hover {
-  background: #edf2f7 !important;
-  border-color: #cbd5e0 !important;
-}
-
-/* Адаптивность для модальных окон */
-@media (max-width: 600px) {
-  .custom-modal-content,
-  .block-type-modal-content {
-    padding: 20px !important;
-    max-width: 90% !important;
-  }
-
-  .block-type-modal-content button {
-    padding: 14px !important;
-    font-size: 14px !important;
-  }
-}
-
-/* Стили для кнопки удаления видео */
-.delete-video-btn {
-  background: #fbb6ce !important;
-  color: #9b2c2c !important;
-  border: 1px solid #fc8181 !important;
-}
-
-.delete-video-btn:hover {
-  background: #f687b3 !important;
-  color: #9b2c2c !important;
-}
-
-/* Стили для видео контейнера при удалении */
-.video-container.removing {
-  animation: fadeOut 0.3s ease-out;
-  opacity: 0;
-}
-
-@keyframes fadeOut {
-  from {
-    opacity: 1;
-    transform: scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-}
-
-.language-label {
-  color: #d4d8dc;
-  font-weight: 500;
-  text-transform: lowercase;
-  letter-spacing: 0.5px;
-  font-size: 12px;
-  padding: 2px 8px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 3px;
-}
-
+/* Copy button styles */
 .copy-button {
   display: flex;
   align-items: center;
@@ -1061,124 +834,6 @@ body {
 
 .copy-icon {
   flex-shrink: 0;
-}
-
-.mermaid {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow-x: auto;
-  padding: 24px 0;
-}
-
-.mermaid-block {
-  margin: 24px 0;
-  padding: 16px 20px;
-  background: #fafafa;
-  border-radius: 12px;
-  border: 1px solid #e0e0e0;
-}
-
-.mermaid-title {
-  margin: 0 0 12px;
-  font-size: 18px;
-  font-weight: 600;
-  color: #263238;
-}
-
-.mermaid {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow-x: auto;
-  padding: 24px 0;
-}
-
-.mermaid .node rect {
-  fill: #e3f2fd; /* мягкий голубой */
-  stroke: #a91256; /* насыщенный синий */
-  stroke-width: 1.5px;
-  rx: 10;
-  ry: 10;
-}
-.mermaid .node circle,
-.mermaid .node ellipse,
-.mermaid .node polygon {
-  stroke-width: 1.5px;
-  rx: 6;
-  ry: 6;
-}
-
-.mermaid .node text {
-  fill: #0d47a1;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.mermaid .edgePath path {
-  stroke: #546e7a;
-  stroke-width: 1.6px;
-}
-
-.mermaid .marker {
-  fill: #546e7a;
-}
-
-.mermaid .edgeLabel {
-  background: transparent;
-  color: #37474f;
-  font-size: 12px;
-}
-
-.mermaid .node polygon {
-  fill-opacity: 0.95;
-}
-
-.mermaid .node:hover rect {
-  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.15));
-  transition: filter 0.2s ease;
-}
-.mermaid .node:hover polygon {
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.15));
-  transition: filter 0.2s ease;
-}
-
-.mermaid-title {
-  font-size: 22px;
-  font-weight: 700;
-  margin-bottom: 20px;
-  color: #263238;
-}
-.mermaid-error {
-  color: #c62828;
-  background: #ffebee;
-  padding: 12px;
-  border-radius: 8px;
-  font-weight: 500;
-}
-
-/* UI */
-.mermaid .node:nth-child(1) rect {
-  fill: #e8f5e9;
-  stroke: #2e7d32;
-}
-
-/* Business Logic */
-.mermaid .node:nth-child(2) rect {
-  fill: #e3f2fd;
-  stroke: #1565c0;
-}
-
-/* Storage */
-.mermaid .node:nth-child(3) rect {
-  fill: #fffde7;
-  stroke: #f9a825;
-}
-
-/* File System */
-.mermaid .node:nth-child(4) rect {
-  fill: #fce4ec;
-  stroke: #ad1457;
 }
 
 /* Стили для верхней навигации */
@@ -1306,7 +961,7 @@ body {
   justify-content: space-between;
   align-items: center;
   gap: 20px;
-  max-width: 800px;
+  max-width: 1200px; /* было 800px */
   margin: 0 auto;
   padding: 0 20px;
 }
@@ -1363,8 +1018,113 @@ body {
   white-space: nowrap;
 }
 
-/* Адаптивность */
+/* Анимации */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes buttonClick {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Адаптивность для мобильных */
 @media (max-width: 768px) {
+  .container {
+    padding: 12px;
+  }
+
+  .module-header {
+    padding: 20px 12px;
+    border-radius: 0 0 16px 16px;
+  }
+
+  .module-title {
+    font-size: 20px;
+  }
+
+  .content-block {
+    padding: 16px;
+  }
+
+  .video-container iframe {
+    height: 250px; /* было 200px, увеличили для лучшего просмотра */
+  }
+
+  .text-content h1 {
+    font-size: 24px;
+  }
+
+  .text-content h2 {
+    font-size: 20px;
+  }
+
+  .text-content table {
+    font-size: 13px;
+  }
+
+  .text-content th,
+  .text-content td {
+    padding: 8px;
+  }
+
   .top-navigation {
     flex-direction: column;
     text-align: center;
@@ -1373,6 +1133,7 @@ body {
   .bottom-navigation {
     flex-direction: column;
     gap: 15px;
+    padding: 0 12px;
   }
 
   .nav-btn {
@@ -1389,28 +1150,198 @@ body {
     margin-right: 0;
     margin-bottom: 10px;
   }
-}
 
-/* Дополнительные стили для лучшего UX */
-@media (min-width: 1200px) {
-  .bottom-navigation {
-    max-width: 1200px;
+  .admin-panel {
+    bottom: 10px;
+    right: 10px;
+    left: 10px;
+    flex-direction: row;
+    justify-content: center;
+    padding: 12px;
+  }
+
+  .admin-button {
+    padding: 10px 16px;
+    font-size: 13px;
+    min-width: auto;
+    flex: 1;
+  }
+
+  .block-controls {
+    flex-direction: column;
+  }
+
+  .block-control-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  #test-admin-toggle {
+    top: 5px;
+    right: 5px;
+    padding: 8px 12px;
+    font-size: 11px;
   }
 }
 
-/* Эффект при нажатии на кнопку */
-@keyframes buttonClick {
-  0% {
+/* Стили для кастомных модальных окон */
+.custom-modal-content,
+.block-type-modal-content {
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.custom-modal button:hover,
+.block-type-modal-content button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.custom-modal button:active,
+.block-type-modal-content button:active {
+  transform: translateY(0);
+}
+
+/* Стили для выбора типа блока */
+.block-type-modal-content button {
+  transition: all 0.2s ease;
+}
+
+.block-type-modal-content button:hover {
+  background: #edf2f7 !important;
+  border-color: #cbd5e0 !important;
+}
+
+/* Адаптивность для модальных окон */
+@media (max-width: 600px) {
+  .custom-modal-content,
+  .block-type-modal-content {
+    padding: 20px !important;
+    max-width: 90% !important;
+  }
+
+  .block-type-modal-content button {
+    padding: 14px !important;
+    font-size: 14px !important;
+  }
+}
+
+/* Стили для кнопки удаления видео */
+.delete-video-btn {
+  background: #fbb6ce !important;
+  color: #9b2c2c !important;
+  border: 1px solid #fc8181 !important;
+}
+
+.delete-video-btn:hover {
+  background: #f687b3 !important;
+  color: #9b2c2c !important;
+}
+
+/* Стили для видео контейнера при удалении */
+.video-container.removing {
+  animation: fadeOut 0.3s ease-out;
+  opacity: 0;
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
     transform: scale(1);
   }
-  50% {
+  to {
+    opacity: 0;
     transform: scale(0.95);
   }
-  100% {
-    transform: scale(1);
+}
+
+/* Дополнительные стили для широких экранов */
+@media (min-width: 1200px) {
+  /* Улучшаем отображение блоков с кодом */
+  .code-content {
+    font-size: 16px;
+  }
+
+  /* Улучшаем отображение ключевых моментов видео */
+  .key-moments {
+    columns: 2; /* Разбиваем на две колонки на широких экранах */
+    column-gap: 30px;
+  }
+
+  .key-moment-item {
+    break-inside: avoid; /* Предотвращаем разрыв элементов при колонках */
+  }
+
+  /* Улучшаем отображение вопросов для обсуждения */
+  .discussion-questions {
+    columns: 2;
+    column-gap: 30px;
+  }
+
+  .question-item {
+    break-inside: avoid;
+  }
+
+  /* Улучшаем отображение quiz блоков */
+  .quiz-block {
+    padding: 28px;
   }
 }
 
-.nav-btn:not(:disabled):active {
-  animation: buttonClick 0.2s ease;
+/* Стили для печати (опционально) */
+@media print {
+  .container {
+    max-width: 100%;
+    padding: 0;
+  }
+
+  .content-block {
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+
+  .video-container,
+  .admin-panel,
+  .nav-btn,
+  .copy-button {
+    display: none;
+  }
+}
+
+/* Стили для контейнера при открытом чате */
+.container {
+  transition:
+    margin-right 0.3s ease-in-out,
+    width 0.3s ease-in-out;
+}
+
+body.chat-open .container {
+  margin-right: 380px;
+}
+
+/* Адаптация для широких экранов */
+@media (min-width: 1600px) {
+  body.chat-open .container {
+    max-width: calc(1100px - 380px);
+    margin-right: 380px;
+  }
+}
+
+/* Затемнение фона на мобильных при открытом чате */
+@media (max-width: 768px) {
+  body.chat-open .container {
+    opacity: 0.3;
+    pointer-events: none;
+    margin-right: 0;
+  }
 }
