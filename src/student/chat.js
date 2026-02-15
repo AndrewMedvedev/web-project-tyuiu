@@ -1,22 +1,9 @@
-// Состояние чата
-let isChatOpen = false;
-let isTyping = false;
+export function initializeChat() {
+  const chatToggle = document.getElementById("chatToggle");
+  const chatClose = document.getElementById("chatClose");
+  const chatInput = document.getElementById("chatInput");
+  const chatSend = document.getElementById("chatSend");
 
-// Элементы DOM
-const chatToggle = document.getElementById("chatToggle");
-const chatPanel = document.getElementById("chatPanel");
-const chatClose = document.getElementById("chatClose");
-const chatInput = document.getElementById("chatInput");
-const chatSend = document.getElementById("chatSend");
-const chatMessages = document.getElementById("chatMessages");
-
-// Инициализация чата
-document.addEventListener("DOMContentLoaded", () => {
-  initializeChat();
-});
-
-function initializeChat() {
-  // Обработчики событий
   chatToggle?.addEventListener("click", toggleChat);
   chatClose?.addEventListener("click", closeChat);
   chatSend?.addEventListener("click", sendMessage);
@@ -31,40 +18,71 @@ function initializeChat() {
 
   // Автоматическое изменение высоты textarea
   chatInput?.addEventListener("input", autoResizeTextarea);
+
+  // Инициализация состояния чата при загрузке
+  initializeChatState();
+}
+
+// Инициализация состояния чата
+function initializeChatState() {
+  const isChatOpen = sessionStorage.getItem("isChatOpen");
+  const chatToggle = document.getElementById("chatToggle");
+  const chatPanel = document.getElementById("chatPanel");
+
+  if (isChatOpen === "true") {
+    chatPanel?.classList.add("open");
+    document.body.classList.add("chat-open");
+    if (chatToggle) chatToggle.style.display = "none";
+  } else {
+    chatPanel?.classList.remove("open");
+    document.body.classList.remove("chat-open");
+    if (chatToggle) chatToggle.style.display = "flex";
+  }
 }
 
 // Переключение чата
 function toggleChat() {
-  isChatOpen = !isChatOpen;
+  const currentState = sessionStorage.getItem("isChatOpen") === "true";
 
-  if (isChatOpen) {
-    openChat();
-  } else {
+  if (currentState) {
     closeChat();
+  } else {
+    openChat();
   }
 }
 
 // Открытие чата
 function openChat() {
-  chatPanel.classList.add("open");
-  document.body.classList.add("chat-open");
-  chatToggle.style.display = "none";
-  chatInput.focus();
+  const chatToggle = document.getElementById("chatToggle");
+  const chatPanel = document.getElementById("chatPanel");
+  const chatInput = document.getElementById("chatInput");
 
-  // Прокрутка к последнему сообщению
+  chatPanel?.classList.add("open");
+  document.body.classList.add("chat-open");
+  if (chatToggle) chatToggle.style.display = "none";
+  chatInput?.focus();
+
+  sessionStorage.setItem("isChatOpen", "true");
   scrollToBottom();
 }
 
 // Закрытие чата
 function closeChat() {
-  chatPanel.classList.remove("open");
+  const chatToggle = document.getElementById("chatToggle");
+  const chatPanel = document.getElementById("chatPanel");
+
+  chatPanel?.classList.remove("open");
   document.body.classList.remove("chat-open");
-  chatToggle.style.display = "flex";
+  if (chatToggle) chatToggle.style.display = "flex";
+
+  sessionStorage.setItem("isChatOpen", "false");
 }
 
 // Отправка сообщения
 async function sendMessage() {
-  const message = chatInput.value.trim();
+  const chatInput = document.getElementById("chatInput");
+  const message = chatInput?.value.trim();
+  const isTyping = sessionStorage.getItem("isTyping") === "true";
 
   if (!message || isTyping) return;
 
@@ -72,8 +90,10 @@ async function sendMessage() {
   addMessage(message, "user");
 
   // Очищаем input
-  chatInput.value = "";
-  autoResizeTextarea();
+  if (chatInput) {
+    chatInput.value = "";
+    autoResizeTextarea();
+  }
 
   // Показываем индикатор печатания
   showTypingIndicator();
@@ -103,6 +123,9 @@ async function sendMessage() {
 
 // Добавление сообщения в чат
 function addMessage(text, sender) {
+  const chatMessages = document.getElementById("chatMessages");
+  if (!chatMessages) return;
+
   const messageDiv = document.createElement("div");
   messageDiv.className = `chat-message ${sender}-message`;
 
@@ -148,7 +171,10 @@ function escapeHtml(text) {
 
 // Показать индикатор печатания
 function showTypingIndicator() {
-  isTyping = true;
+  const chatMessages = document.getElementById("chatMessages");
+  if (!chatMessages) return;
+
+  sessionStorage.setItem("isTyping", "true");
 
   const indicator = document.createElement("div");
   indicator.className = "typing-indicator";
@@ -165,7 +191,7 @@ function showTypingIndicator() {
 
 // Скрыть индикатор печатания
 function hideTypingIndicator() {
-  isTyping = false;
+  sessionStorage.setItem("isTyping", "false");
 
   const indicator = document.getElementById("typingIndicator");
   if (indicator) {
@@ -175,11 +201,17 @@ function hideTypingIndicator() {
 
 // Прокрутка вниз
 function scrollToBottom() {
-  chatMessages.scrollTop = chatMessages.scrollHeight;
+  const chatMessages = document.getElementById("chatMessages");
+  if (chatMessages) {
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
 }
 
 // Автоматическое изменение высоты textarea
 function autoResizeTextarea() {
+  const chatInput = document.getElementById("chatInput");
+  if (!chatInput) return;
+
   chatInput.style.height = "auto";
   chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + "px";
 }

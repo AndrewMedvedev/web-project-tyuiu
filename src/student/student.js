@@ -1,5 +1,5 @@
 import { renderModule } from "../general/createModules.js";
-import "./chat.js";
+import { initializeChat } from "./chat.js";
 // const dataElement = document.getElementById("initial-data");
 // const data = JSON.parse(dataElement.textContent);
 
@@ -140,3 +140,6 @@ const data = {
   },
 };
 renderModule(data);
+document.addEventListener("DOMContentLoaded", () => {
+  initializeChat();
+});

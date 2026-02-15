@@ -32,8 +32,6 @@ let questions = [
   },
 ];
 
-let currentQuestionIndex = null;
-
 // Инициализация
 document.addEventListener("DOMContentLoaded", () => {
   renderQuestions();
@@ -276,7 +274,7 @@ function addNewQuestion() {
 
 // Показ модального окна удаления
 function showDeleteModal(index) {
-  currentQuestionIndex = index;
+  sessionStorage.setItem("currentQuestionIndex", `${index}`);
   document.getElementById("modal-title").textContent = "Удаление вопроса";
   document.getElementById("modal-message").textContent =
     "Вы уверены, что хотите удалить этот вопрос?";
@@ -286,6 +284,7 @@ function showDeleteModal(index) {
 
 // Подтверждение удаления
 function confirmDelete() {
+  currentQuestionIndex = Number(sessionStorage.getItem("currentQuestionIndex"));
   if (currentQuestionIndex !== null) {
     questions.splice(currentQuestionIndex, 1);
     renderQuestions();
@@ -296,7 +295,7 @@ function confirmDelete() {
 // Закрытие модального окна
 function closeModal() {
   document.getElementById("confirm-modal").classList.remove("active");
-  currentQuestionIndex = null;
+  sessionStorage.setItem("currentQuestionIndex", null);
 }
 
 // Сохранение изменений
