@@ -1,7 +1,7 @@
-const basePath = "https://7bca-45-128-99-26.ngrok-free.app/api/v1/courses";
+const basePath = "http://localhost:8000/api/v1/courses";
 
 export async function sendData(data) {
-  fetch(basePath, {
+  const response = await fetch(basePath, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
