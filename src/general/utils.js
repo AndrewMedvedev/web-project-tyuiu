@@ -1,3 +1,4 @@
+
 function escapeHtml(text) {
   const div = document.createElement("div");
   div.textContent = text;
@@ -219,7 +220,7 @@ function sanitizeMermaid(code) {
     .replace(/```\s*$/i, "")
     .trim();
 
-  // Удаляем все директивы вида %%{...}%% (не только init)
+  // Удаляем все директивы вида %%{...}%%
   clean = clean.replace(/^%%\{[\s\S]*?\}%%\s*\n?/gm, "");
 
   // Преобразуем diagram в graph с сохранением направления
@@ -231,6 +232,28 @@ function sanitizeMermaid(code) {
   } else if (clean.toLowerCase().startsWith("diagram\n")) {
     clean = "graph" + clean.substring(7);
   }
+
+  // Экранируем все специальные символы в тексте узлов
+  clean = clean.replace(/\[([^\]]+)\]/g, (match, text) => {
+    // Проверяем, содержит ли текст уже HTML-сущности
+    if (!text.match(/&#\d+;/g)) {
+      // Экранируем специальные символы
+      const escapedText = text
+        .replace(/\(/g, "&#40;")
+        .replace(/\)/g, "&#41;")
+        .replace(/\[/g, "&#91;")
+        .replace(/\]/g, "&#93;")
+        .replace(/\{/g, "&#123;")
+        .replace(/\}/g, "&#125;")
+        .replace(/\#/g, "&#35;")
+        .replace(/\;/g, "&#59;")
+        .replace(/\+/g, "&#43;")
+        .replace(/\=/g, "&#61;");
+
+      return `[${escapedText}]`;
+    }
+    return match; // Если уже есть HTML-сущности, оставляем как есть
+  });
 
   // Удаляем возможные пустые строки в начале
   clean = clean.replace(/^\s*\n+/, "");
@@ -248,11 +271,18 @@ function getContentTypeLabel(type) {
   };
   return labels[type] || type;
 }
+
+function getModuleById(moduleId, course) {
+  return course.modules.find((module) => module.id === moduleId);
+}
+
+
 export {
   formatTime,
   formatDuration,
   parseMarkdown,
   getEmbedUrl,
   sanitizeMermaid,
-  getContentTypeLabel
+  getContentTypeLabel,
+  getModuleById,
 };

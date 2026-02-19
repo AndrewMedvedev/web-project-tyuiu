@@ -11,21 +11,20 @@
     />
   </head>
   <body>
-    <div class="admin-toolbar">
-      <h2 style="margin: 0">Редактор контента</h2>
-      <div class="admin-controls">
-        <button class="admin-btn export-btn" id="exportBtn">
-          📋 Экспорт JSON
-        </button>
-      </div>
-    </div>
-
     <div class="main-content">
       <div id="app">
         <div class="loading" id="loading">
           <div class="loading-spinner"></div>
           <p>Загрузка данных...</p>
         </div>
+      </div>
+    </div>
+
+    <div class="admin-toolbar">
+      <div class="admin-controls">
+        <button class="admin-btn publish-btn" id="publishBtn">
+          📤 Опубликовать
+        </button>
       </div>
     </div>
 
@@ -82,7 +81,8 @@
     </div>
 
     <script id="initial-data" type="application/json">
-      {{ data | tojson }}
+      {{ course | tojson }}
+      {{ moduleId | tojson }}
     </script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>

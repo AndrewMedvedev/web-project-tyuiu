@@ -17,7 +17,7 @@ export function renderModule(moduleData) {
   container.className = "container";
 
   // 3. Для КАЖДОГО блока в массиве content_blocks
-  moduleData.content_blocks.forEach((block, index) => {
+  moduleData.forEach((block, index) => {
     const blockElement = createContentBlock(block, index); // Создаем элемент блока
     container.appendChild(blockElement);
   });

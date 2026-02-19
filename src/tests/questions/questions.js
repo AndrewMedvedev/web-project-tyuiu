@@ -1,45 +1,41 @@
-// Исходные данные
-let questions = [
-  {
-    text: "Опишите основные этапы жизненного цикла программного обеспечения (ЖЦ ПО) и кратко объясните, какая цель преследуется на каждом из них. Какие последствия могут быть, если пропустить один из этапов, например, этап тестирования?",
-    options: [
-      "Пропуск этапа тестирования не влияет на качество ПО, если разработчики опытные",
-      "Пропуск тестирования может привести к выходу ПО с критическими ошибками, что повлияет на репутацию и безопасность",
-      "Тестирование можно заменить этапом проектирования",
-    ],
-    correct_answers: [1],
-    points: 1,
-  },
-  {
-    text: "В чём принципиальное различие между программированием и инженерией программного обеспечения? Приведите пример, когда простое программирование может оказаться недостаточным, и объясните, почему в этом случае требуется именно инженерный подход.",
-    options: [
-      "Программирование — это написание кода, а инженерия ПО — только управление командой разработчиков",
-      "Инженерия ПО включает в себя только тестирование и документирование, а программирование — это реализация",
-      "Инженерия ПО — это системный подход, включающий планирование, анализ требований, проектирование, тестирование и сопровождение, тогда как программирование — лишь часть этого процесса",
-    ],
-    correct_answers: [2],
-    points: 1,
-  },
-  {
-    text: "Команда разработчиков получила от заказчика описание функциональности нового приложения для учёта рабочего времени. Сейчас они анализируют, какие именно данные нужно собирать, как пользователи будут взаимодействовать с системой, какие ограничения существуют (например, интеграция с существующими системами). На каком этапе жизненного цикла ПО находится проект? Обоснуйте свой ответ.",
-    options: [
-      "Этап программирования",
-      "Этап сопровождения",
-      "Этап анализа требований",
-    ],
-    correct_answers: [2],
-    points: 1,
-  },
-];
+// import { course } from "../../general/data.js";
+import { getModuleById } from "../../general/utils.js";
+import { sendData } from "../../general/rest.js";
+
+const dataElement = document.getElementById("initial-data");
+const data = JSON.parse(dataElement.textContent);
+const moduleId = data[moduleId];
+const course = data[course];
+
+// const moduleId = "70601b76-7d82-4251-8409-055a3ccced00";
+const module = getModuleById(moduleId, course);
+
+let questions = module.assignment;
+
+// Конфигурация API
 
 // Инициализация
 document.addEventListener("DOMContentLoaded", () => {
   renderQuestions();
+  initPublishButton();
 });
+
+// Инициализация кнопки публикации
+function initPublishButton() {
+  const publishBtn = document.getElementById("publish-btn");
+  if (publishBtn) {
+    // Удаляем старый обработчик если был
+    publishBtn.removeEventListener("click", publishQuestions);
+    // Добавляем новый обработчик
+    publishBtn.addEventListener("click", publishQuestions);
+  }
+}
 
 // Отрисовка всех вопросов
 function renderQuestions() {
   const container = document.getElementById("questions-container");
+  if (!container) return;
+
   container.innerHTML = "";
 
   questions.forEach((question, index) => {
@@ -284,8 +280,10 @@ function showDeleteModal(index) {
 
 // Подтверждение удаления
 function confirmDelete() {
-  currentQuestionIndex = Number(sessionStorage.getItem("currentQuestionIndex"));
-  if (currentQuestionIndex !== null) {
+  const currentQuestionIndex = Number(
+    sessionStorage.getItem("currentQuestionIndex"),
+  );
+  if (!isNaN(currentQuestionIndex) && currentQuestionIndex >= 0) {
     questions.splice(currentQuestionIndex, 1);
     renderQuestions();
     closeModal();
@@ -295,30 +293,98 @@ function confirmDelete() {
 // Закрытие модального окна
 function closeModal() {
   document.getElementById("confirm-modal").classList.remove("active");
-  sessionStorage.setItem("currentQuestionIndex", null);
+  sessionStorage.removeItem("currentQuestionIndex");
 }
 
-// Сохранение изменений
-function saveQuestions() {
-  // Выводим данные в консоль
-  console.log("Сохраненные вопросы:", JSON.stringify(questions, null, 2));
+// Функция для отображения уведомлений
+function showNotification(message, type = "success") {
+  // Удаляем предыдущее уведомление если есть
+  const oldNotification = document.querySelector(".notification");
+  if (oldNotification) {
+    oldNotification.remove();
+  }
 
-  // Сохраняем в localStorage
-  localStorage.setItem("savedQuestions", JSON.stringify(questions));
+  // Создаем элемент уведомления
+  const notification = document.createElement("div");
+  notification.className = `notification ${type}`;
+  notification.textContent = message;
 
-  // Визуальный feedback
-  const btn = document.querySelector(".publish-button");
-  const originalText = btn.innerHTML;
-  btn.innerHTML = "✅ Сохранено!";
+  document.body.appendChild(notification);
 
+  // Удаляем уведомление через 3 секунды
   setTimeout(() => {
-    btn.innerHTML = originalText;
-  }, 2000);
+    notification.style.animation = "slideOut 0.3s ease forwards";
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.remove();
+      }
+    }, 300);
+  }, 3000);
+}
 
-  // Показываем уведомление (можно заменить на более красивое)
-  alert(
-    "Изменения сохранены! Проверьте консоль браузера (F12) для просмотра данных.",
-  );
+// Функция для публикации вопросов на бэкэнд
+async function publishQuestions() {
+  const publishBtn = document.getElementById("publish-btn");
+  if (!publishBtn) return;
+
+  // Сохраняем оригинальный контент кнопки
+  const originalContent = publishBtn.innerHTML;
+
+  try {
+    // Меняем состояние кнопки на "загрузка"
+    publishBtn.innerHTML = `
+      <span class="btn-icon">⏳</span>
+      <span class="btn-text">Публикация...</span>
+    `;
+    publishBtn.disabled = true;
+
+    const moduleIndex = course.modules.findIndex(
+      (module) => module.id === moduleId,
+    );
+    course.modules[moduleIndex].assignment.questions = questions;
+    console.log(course);
+    const response = await sendData(course);
+
+    // Проверяем статус ответа
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    // Сохраняем в localStorage как резервную копию
+    localStorage.setItem("publishedQuestions", JSON.stringify(questions));
+
+    // Показываем успешное уведомление
+    showNotification(`✅ Вопросы успешно опубликованы!`, "success");
+
+    // Меняем текст кнопки на успех
+    publishBtn.innerHTML = `
+      <span class="btn-icon">✅</span>
+      <span class="btn-text">Опубликовано!</span>
+    `;
+  } catch (error) {
+    // Обработка ошибок
+    console.error("Ошибка при публикации:", error);
+
+    // Показываем сообщение об ошибке
+    showNotification(`❌ Ошибка публикации: ${error.message}`, "error");
+
+    // Возвращаем исходный текст кнопки
+    publishBtn.innerHTML = originalContent;
+  } finally {
+    // Возвращаем кнопку в исходное состояние через 2 секунды (только для успеха)
+    if (!publishBtn.disabled) {
+      setTimeout(() => {
+        publishBtn.innerHTML = originalContent;
+        publishBtn.disabled = false;
+      }, 2000);
+    } else {
+      // Для успешного состояния тоже возвращаем через 2 секунды
+      setTimeout(() => {
+        publishBtn.innerHTML = originalContent;
+        publishBtn.disabled = false;
+      }, 2000);
+    }
+  }
 }
 
 // Вспомогательная функция для склонения слова "балл"
@@ -329,18 +395,31 @@ function getPointsWord(points) {
   return "баллов";
 }
 
-// Инициализация кнопки добавления
-document.getElementById("add-question-btn").onclick = addNewQuestion;
+// Инициализация кнопки добавления вопроса
+document.addEventListener("DOMContentLoaded", () => {
+  const addBtn = document.getElementById("add-question-btn");
+  if (addBtn) {
+    addBtn.onclick = addNewQuestion;
+  }
+});
 
 // Загрузка сохраненных вопросов из localStorage (если есть)
-const savedQuestions = localStorage.getItem("savedQuestions");
-if (savedQuestions) {
-  try {
+try {
+  const savedQuestions = localStorage.getItem("savedQuestions");
+  if (savedQuestions) {
     const parsed = JSON.parse(savedQuestions);
     if (Array.isArray(parsed) && parsed.length > 0) {
       questions = parsed;
     }
-  } catch (e) {
-    console.log("Ошибка загрузки сохраненных вопросов");
   }
+
+  const publishedQuestions = localStorage.getItem("publishedQuestions");
+  if (publishedQuestions && !savedQuestions) {
+    const parsed = JSON.parse(publishedQuestions);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      questions = parsed;
+    }
+  }
+} catch (e) {
+  console.log("Ошибка загрузки сохраненных вопросов:", e);
 }

@@ -1,9 +1,18 @@
 import { getContentTypeLabel } from "../general/utils.js";
-import { courseContent } from "./test.js";
-
+// import { course } from "../general/data.js";
+import { getModuleById } from "../general/utils.js";
+import { sendData } from "../general/rest.js";
 // Глобальные переменные
 let courseData = null;
 let onTypeSelectCallback = null;
+
+const dataElement = document.getElementById("initial-data");
+const data = JSON.parse(dataElement.textContent);
+const moduleId = data[moduleId];
+const course = data[course];
+// const moduleId = "70601b76-7d82-4251-8409-055a3ccced00";
+// Добавить новые переменные
+let publishInProgress = false;
 
 // Инициализация админ-панели
 async function initAdmin() {
@@ -22,7 +31,8 @@ async function initAdmin() {
 // Загрузка данных курса
 async function loadCourseData() {
   try {
-    courseData = courseContent;
+    const module = getModuleById(moduleId, course);
+    courseData = module.content_blocks;
   } catch (error) {
     console.error("Ошибка загрузки данных:", error);
     // Создаем минимальные демо данные
@@ -89,29 +99,21 @@ function renderContentBlocks() {
   const app = document.getElementById("app");
   app.innerHTML = "";
 
-  if (!courseData.modules || courseData.modules.length === 0) {
-    courseData.modules = [createEmptyModule()];
+  if (!courseData || courseData.length === 0) {
+    courseData = [createEmptyModule()];
   }
 
   const module = courseData;
-
-  // Убеждаемся, что content_blocks существует
-  if (!module.content_blocks) {
-    module.content_blocks = [];
-  }
 
   // Контейнер для блоков
   const blocksContainer = document.createElement("div");
   blocksContainer.className = "blocks-container";
   blocksContainer.id = "blocksContainer";
 
-  // Рендерим блоки
-  if (module.content_blocks && module.content_blocks.length > 0) {
-    module.content_blocks.forEach((block, index) => {
-      const blockElement = createBlockEditor(block, index);
-      blocksContainer.appendChild(blockElement);
-    });
-  }
+  module.forEach((block, index) => {
+    const blockElement = createBlockEditor(block, index);
+    blocksContainer.appendChild(blockElement);
+  });
 
   app.appendChild(blocksContainer);
 
@@ -157,7 +159,7 @@ function createBlockEditor(block, index) {
   }
 
   // Кнопка перемещения вниз
-  if (index < courseData.content_blocks.length - 1) {
+  if (index < courseData.length - 1) {
     const moveDownBtn = document.createElement("button");
     moveDownBtn.className = "block-control-btn move-down-btn";
     moveDownBtn.title = "Переместить вниз";
@@ -694,14 +696,14 @@ function renderMermaidEditor(container, block, index) {
 // Управление блоками
 function moveBlockUp(index) {
   if (index > 0) {
-    const blocks = courseData.content_blocks;
+    const blocks = courseData;
     [blocks[index], blocks[index - 1]] = [blocks[index - 1], blocks[index]];
     renderContentBlocks();
   }
 }
 
 function moveBlockDown(index) {
-  const blocks = courseData.content_blocks;
+  const blocks = courseData;
   if (index < blocks.length - 1) {
     [blocks[index], blocks[index + 1]] = [blocks[index + 1], blocks[index]];
     renderContentBlocks();
@@ -710,7 +712,7 @@ function moveBlockDown(index) {
 
 function deleteBlock(index) {
   if (confirm("Удалить этот блок?")) {
-    const blocks = courseData.content_blocks;
+    const blocks = courseData;
     blocks.splice(index, 1);
     renderContentBlocks();
   }
@@ -718,14 +720,14 @@ function deleteBlock(index) {
 
 function addBlockBelow(index, type) {
   const newBlock = createEmptyBlock(type);
-  const blocks = courseData.content_blocks;
+  const blocks = courseData;
   blocks.splice(index + 1, 0, newBlock);
   renderContentBlocks();
 }
 
 function addNewBlock(type) {
   const newBlock = createEmptyBlock(type);
-  const blocks = courseData.content_blocks;
+  const blocks = courseData;
   blocks.push(newBlock);
   renderContentBlocks();
 }
@@ -749,43 +751,172 @@ function hideBlockTypeModal() {
   onTypeSelectCallback = null;
 }
 
-// Экспорт JSON
-function exportJSON() {
+// НОВЫЙ МЕТОД: Публикация данных на бэкенд
+async function publishContent() {
+  if (publishInProgress) {
+    showNotification("Публикация уже выполняется...", "info");
+    return;
+  }
+
+  // Валидация данных перед отправкой
+  if (!validateCourseData()) {
+    showNotification("Пожалуйста, заполните все обязательные поля", "error");
+    return;
+  }
+
+  const publishBtn = document.getElementById("publishBtn");
+  const originalText = publishBtn.textContent;
+
   try {
-    const jsonStr = JSON.stringify(courseData, null, 2);
-    const blob = new Blob([jsonStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
+    publishInProgress = true;
+    publishBtn.textContent = "⏳ Публикация...";
+    publishBtn.disabled = true;
+    const moduleIndex = course.modules.findIndex(
+      (module) => module.id === moduleId,
+    );
+    course.modules[moduleIndex].content_blocks = courseData;
+    console.log(course);
+    const response = await sendData(course);
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "course-data.json";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.message || `Ошибка сервера: ${response.status}`,
+      );
+    }
 
-    // Показать уведомление
-    const exportBtn = document.getElementById("exportBtn");
-    const originalText = exportBtn.textContent;
-    exportBtn.textContent = "✓ Экспортировано";
-    exportBtn.style.background = "#38a169";
+    // Показываем успешное уведомление
+    showNotification("Контент успешно опубликован!", "success");
 
+    // Обновляем кнопку
+    publishBtn.textContent = "✓ Опубликовано";
+    publishBtn.style.background = "#38a169";
+
+    // Возвращаем исходное состояние кнопки через 3 секунды
     setTimeout(() => {
-      exportBtn.textContent = originalText;
-      exportBtn.style.background = "#48bb78";
-    }, 2000);
+      publishBtn.textContent = originalText;
+      publishBtn.style.background = "#667eea";
+      publishBtn.disabled = false;
+      publishInProgress = false;
+    }, 3000);
   } catch (error) {
-    console.error("Ошибка экспорта:", error);
-    alert("Ошибка при экспорте данных");
+    console.error("Ошибка публикации:", error);
+    showNotification(`Ошибка при публикации: ${error.message}`, "error");
+
+    // Возвращаем кнопку в исходное состояние
+    publishBtn.textContent = originalText;
+    publishBtn.style.background = "#667eea";
+    publishBtn.disabled = false;
+    publishInProgress = false;
   }
 }
 
+// НОВЫЙ МЕТОД: Валидация данных курса
+function validateCourseData() {
+  if (!courseData) {
+    showNotification("Нет данных для публикации", "error");
+    return false;
+  }
+
+  // Проверяем наличие обязательных полей
+  if (!courseData || courseData.length === 0) {
+    if (!confirm("Нет блоков контента. Продолжить публикацию?")) {
+      return false;
+    }
+  }
+
+  // Проверка каждого блока на минимальные требования
+  let isValid = true;
+  const errors = [];
+
+  courseData.forEach((block, index) => {
+    if (block.content_type === "video" && !block.url) {
+      errors.push(`Блок ${index + 1}: Видео должно содержать URL`);
+      isValid = false;
+    }
+    if (block.content_type === "code" && !block.code) {
+      errors.push(`Блок ${index + 1}: Код не может быть пустым`);
+      isValid = false;
+    }
+    if (block.content_type === "text" && !block.md_content) {
+      errors.push(`Блок ${index + 1}: Текстовый блок не может быть пустым`);
+      isValid = false;
+    }
+  });
+
+  if (errors.length > 0) {
+    console.warn("Ошибки валидации:", errors);
+    // Можно показать список ошибок, если нужно
+  }
+
+  return isValid;
+}
+
+// НОВЫЙ МЕТОД: Показ уведомлений
+function showNotification(message, type = "info") {
+  // Удаляем предыдущее уведомление, если есть
+  const existingNotification = document.querySelector(".notification");
+  if (existingNotification) {
+    existingNotification.remove();
+  }
+
+  // Создаем новое уведомление
+  const notification = document.createElement("div");
+  notification.className = `notification ${type}`;
+  notification.textContent = message;
+
+  // Добавляем кнопку закрытия для информационных уведомлений
+  if (type === "info") {
+    const closeBtn = document.createElement("button");
+    closeBtn.innerHTML = "×";
+    closeBtn.style.cssText = `
+      background: none;
+      border: none;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+      margin-left: 12px;
+      padding: 0 4px;
+    `;
+    closeBtn.addEventListener("click", () => notification.remove());
+    notification.appendChild(closeBtn);
+  }
+
+  document.body.appendChild(notification);
+
+  // Автоматически скрываем через 5 секунд для success/error
+  if (type !== "info") {
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.style.animation = "slideOut 0.3s ease-in";
+        setTimeout(() => notification.remove(), 300);
+      }
+    }, 5000);
+  }
+}
+
+// НОВЫЙ МЕТОД: Добавление анимации скрытия
+const style = document.createElement("style");
+style.textContent = `
+  @keyframes slideOut {
+    from {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+  }
+`;
+document.head.appendChild(style);
+
 // Настройка обработчиков событий
 function setupEventListeners() {
-  // Кнопка экспорта
-  const exportBtn = document.getElementById("exportBtn");
-  if (exportBtn) {
-    exportBtn.addEventListener("click", exportJSON);
+  // НОВОЕ: Кнопка публикации
+  const publishBtn = document.getElementById("publishBtn");
+  if (publishBtn) {
+    publishBtn.addEventListener("click", publishContent);
   }
 
   // Модальное окно выбора типа блока

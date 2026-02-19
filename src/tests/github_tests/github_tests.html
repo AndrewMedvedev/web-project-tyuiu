@@ -88,12 +88,7 @@
             <button type="submit" class="btn btn-primary" id="submitBtn">
               <span>💾</span> Сохранить задание
             </button>
-            <button
-              type="button"
-              class="btn btn-outline"
-              id="cancelBtn"
-              onclick="cancelEdit()"
-            >
+            <button type="button" class="btn btn-outline" id="cancelBtn">
               <span>✖️</span> Отмена
             </button>
           </div>
@@ -110,6 +105,11 @@
       </div>
     </div>
 
-    <script src="gitHubTests.js"></script>
+    <script id="initial-data" type="application/json">
+      {{ course | tojson }}
+      {{ moduleId | tojson }}
+    </script>
+
+    <script src="gitHubTests.js" type="module"></script>
   </body>
 </html>

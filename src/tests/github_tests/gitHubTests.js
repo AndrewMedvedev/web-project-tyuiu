@@ -1,24 +1,70 @@
-// Хранилище тестов
+// import { course } from "../../general/data.js";
+import { getModuleById } from "../../general/utils.js";
+import { sendData } from "../../general/rest.js";
+
+const dataElement = document.getElementById("initial-data");
+const data = JSON.parse(dataElement.textContent);
+const moduleId = data[moduleId];
+const course = data[course];
+
+// const moduleId = "70601b76-7d82-4251-8409-055a3ccced00";
+const module = getModuleById(moduleId, course);
+
 let tests = [];
 let currentEditId = null;
-
-// Пример данных для инициализации
-const sampleTest = {
-  id: Date.now(),
-  assignment_type: "github",
-  version: 0,
-  title:
-    "Реализация ключевых компонентов системы с соблюдением чистого кода и архитектурных решений",
-  max_score: 100,
-  passing_score: 70,
-  repository_task: "https://github.com/your-org/module4-implementation-task",
-  repository_rules:
-    "https://github.com/your-org/module4-implementation-task/blob/main/.github/CONTRIBUTING.md",
-  required_branch: "develop",
-};
-
+module.assignment.id = Date.now();
 // Добавляем пример при загрузке
-tests.push(sampleTest);
+tests.push(module.assignment);
+
+// Функция для отображения уведомлений
+function showNotification(message, type = "success") {
+  // Удаляем существующее уведомление, если есть
+  const existingNotification = document.querySelector(".notification");
+  if (existingNotification) {
+    existingNotification.remove();
+  }
+
+  // Создаем новое уведомление
+  const notification = document.createElement("div");
+  notification.className = `notification notification-${type}`;
+  notification.textContent = message;
+
+  // Добавляем в DOM
+  document.body.appendChild(notification);
+
+  setTimeout(() => notification.classList.add("show"), 10);
+
+  // Автоматически скрываем через 5 секунд
+  setTimeout(() => {
+    notification.classList.remove("show");
+    setTimeout(() => notification.remove(), 300);
+  }, 5000);
+}
+
+// Функция для отправки данных на API
+async function saveToAPI(moduleData) {
+  try {
+    delete moduleData.assignment.id;
+    const moduleIndex = course.modules.findIndex(
+      (module) => module.id === moduleId,
+    );
+    course.modules[moduleIndex].assignment = moduleData.assignment;
+    const response = await sendData(course);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.message ||
+          `Ошибка ${response.status}: ${response.statusText}`,
+      );
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("API Error:", error);
+    throw new Error(`Не удалось сохранить данные: ${error.message}`);
+  }
+}
 
 // Функция для отрисовки списка тестов
 function renderTests() {
@@ -26,12 +72,12 @@ function renderTests() {
 
   if (tests.length === 0) {
     container.innerHTML = `
-                    <div class="empty-state">
-                        <div>📭</div>
-                        <h3>Нет заданий</h3>
-                        <p>Создайте новое задание с помощью формы выше</p>
-                    </div>
-                `;
+            <div class="empty-state">
+                <div>📭</div>
+                <h3>Нет заданий</h3>
+                <p>Создайте новое задание с помощью формы выше</p>
+            </div>
+        `;
     return;
   }
 
@@ -122,66 +168,169 @@ window.editTest = function (id) {
 };
 
 // Функция удаления теста
-window.deleteTest = function (id) {
-  if (confirm("Вы уверены, что хотите удалить это задание?")) {
+window.deleteTest = async function (id) {
+  if (!confirm("Вы уверены, что хотите удалить это задание?")) {
+    return;
+  }
+
+  // Блокируем кнопки удаления на время операции
+  const deleteButtons = document.querySelectorAll(".delete-btn");
+  deleteButtons.forEach((btn) => (btn.disabled = true));
+
+  try {
+    // Удаляем тест из локального массива
     tests = tests.filter((t) => t.id != id);
+
+    // Обновляем данные модуля
+    const updatedModule = { ...module };
+    updatedModule.assignment =
+      tests.find((t) => t.id === module.assignment?.id) || tests[0] || null;
+
+    // Перерисовываем список
     renderTests();
 
     // Если удаляем текущий редактируемый тест, очищаем форму
     if (currentEditId == id) {
       clearForm();
     }
+
+    showNotification("Задание успешно удалено!", "success");
+  } catch (error) {
+    showNotification(error.message, "error");
+  } finally {
+    // Разблокируем кнопки
+    deleteButtons.forEach((btn) => (btn.disabled = false));
   }
 };
 
 // Обработчик отправки формы
-document.getElementById("testForm").addEventListener("submit", function (e) {
-  e.preventDefault();
+document
+  .getElementById("testForm")
+  .addEventListener("submit", async function (e) {
+    e.preventDefault();
 
-  // Собираем данные из формы
-  const testData = {
-    id: document.getElementById("editId").value || Date.now().toString(),
-    assignment_type: "github",
-    version: parseInt(document.getElementById("version").value) || 0,
-    title: document.getElementById("title").value,
-    max_score: parseInt(document.getElementById("max_score").value),
-    passing_score: parseInt(document.getElementById("passing_score").value),
-    repository_task: document.getElementById("repository_task").value,
-    repository_rules: document.getElementById("repository_rules").value,
-    required_branch: document.getElementById("required_branch").value,
-  };
+    // Блокируем кнопку отправки
+    const submitBtn = document.getElementById("submitBtn");
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = "<span>⏳</span> Сохранение...";
 
-  // Валидация
-  if (testData.passing_score > testData.max_score) {
-    alert("Проходной балл не может быть больше максимального!");
-    return;
-  }
+    try {
+      // Собираем данные из формы
+      const testData = {
+        id: document.getElementById("editId").value || Date.now().toString(),
+        assignment_type: "github",
+        version: parseInt(document.getElementById("version").value) || 0,
+        title: document.getElementById("title").value,
+        max_score: parseInt(document.getElementById("max_score").value),
+        passing_score: parseInt(document.getElementById("passing_score").value),
+        repository_task: document.getElementById("repository_task").value,
+        repository_rules: document.getElementById("repository_rules").value,
+        required_branch: document.getElementById("required_branch").value,
+      };
 
-  // Проверяем, редактирование это или создание
-  const existingIndex = tests.findIndex((t) => t.id == testData.id);
+      // Валидация
+      if (testData.passing_score > testData.max_score) {
+        showNotification(
+          "Проходной балл не может быть больше максимального!",
+          "error",
+        );
+        return;
+      }
 
-  if (existingIndex !== -1) {
-    // Обновляем существующий тест
-    testData.version = tests[existingIndex].version + 1;
-    tests[existingIndex] = testData;
-  } else {
-    // Добавляем новый тест
-    tests.push(testData);
-  }
+      // Проверяем обязательные поля
+      if (
+        !testData.title ||
+        !testData.repository_task ||
+        !testData.repository_rules
+      ) {
+        showNotification(
+          "Пожалуйста, заполните все обязательные поля!",
+          "error",
+        );
+        return;
+      }
 
-  // Перерисовываем список
-  renderTests();
+      // Проверяем, редактирование это или создание
+      const existingIndex = tests.findIndex((t) => t.id == testData.id);
+      const isEditing = existingIndex !== -1;
 
-  // Очищаем форму
-  clearForm();
+      if (isEditing) {
+        // Обновляем существующий тест
+        testData.version = tests[existingIndex].version + 1;
+        tests[existingIndex] = testData;
+      } else {
+        // Добавляем новый тест
+        tests.push(testData);
+      }
 
-  // Показываем сообщение об успехе
-  alert(
-    existingIndex !== -1
-      ? "Задание успешно обновлено!"
-      : "Задание успешно создано!",
-  );
-});
+      // Обновляем assignment в модуле
+      const updatedModule = { ...module };
+      updatedModule.assignment =
+        tests.find((t) => t.id === module.assignment?.id) ||
+        tests[tests.length - 1];
+
+      // Отправляем на API
+      await saveToAPI(updatedModule);
+
+      // Перерисовываем список
+      renderTests();
+
+      // Очищаем форму
+      clearForm();
+
+      // Показываем сообщение об успехе
+      showNotification(
+        isEditing ? "Задание успешно обновлено!" : "Задание успешно создано!",
+        "success",
+      );
+    } catch (error) {
+      showNotification(error.message, "error");
+    } finally {
+      // Разблокируем кнопку и восстанавливаем текст
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalText;
+    }
+  });
+
+// Добавляем стили для уведомлений
+const style = document.createElement("style");
+style.textContent = `
+    .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 500;
+        z-index: 1000;
+        opacity: 0;
+        transform: translateX(100%);
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .notification.show {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    
+    .notification-success {
+        background: linear-gradient(135deg, #28a745, #20c997);
+    }
+    
+    .notification-error {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+    }
+    
+    button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+`;
+
+document.head.appendChild(style);
 
 // Инициализация
 renderTests();

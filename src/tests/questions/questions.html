@@ -8,14 +8,6 @@
   </head>
   <body>
     <div class="container">
-      <header class="module-header">
-        <h1 class="module-title">📝 Редактор тестов</h1>
-        <p class="module-description">
-          Создание и редактирование вопросов для тестирования
-        </p>
-        <span class="module-order">Режим: Редактирование</span>
-      </header>
-
       <!-- Контейнер для вопросов -->
       <div id="questions-container"></div>
 
@@ -26,8 +18,9 @@
 
       <!-- Панель сохранения -->
       <div class="admin-panel" id="admin-panel">
-        <button class="admin-button publish-button" onclick="saveQuestions()">
-          💾 Сохранить изменения
+        <button class="admin-button publish-button" id="publish-btn">
+          <span class="btn-icon">📢</span>
+          <span class="btn-text">Опубликовать</span>
         </button>
       </div>
     </div>
@@ -43,6 +36,11 @@
         </div>
       </div>
     </div>
+
+    <script id="initial-data" type="application/json">
+      {{ course | tojson }}
+      {{ moduleId | tojson }}
+    </script>
 
     <script src="questions.js" type="module"></script>
   </body>
